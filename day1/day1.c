@@ -2,7 +2,6 @@
 #include<stdlib.h>
 #include<string.h>
 
-
 #define DEBUG 0
 #define MAX_FILE_NAME 100
 
@@ -38,6 +37,8 @@ int CountFileLines(char filePath[])
     fclose(fp);
     return count;
 }
+
+
 
 void LoadTestCaseInputData(char filePath[], int lineItemCount, int listA[], int listB[])
 {
@@ -108,7 +109,25 @@ int CalculateSimilarity(int lineItemCount, int listA[], int listB[]) {
     return similarity;
 }
 
+struct TestInfo {
+    char testCaseDataFileName[MAX_FILE_NAME];
+    int expectedDistance;
+    int expectedSimilarity;
+};
 
+void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
+    FILE *testCaseFile = fopen(testCaseInfoFilePath, "r");
+    if (testCaseFile == NULL) {
+        printf("no such file.\n");
+        return;
+    }
+    
+    fscanf(testCaseFile, "%s\n", testInfo->testCaseDataFileName);
+    fscanf(testCaseFile, "%d\n", &testInfo->expectedDistance);
+    fscanf(testCaseFile, "%d\n", &testInfo->expectedSimilarity);
+
+    fclose(testCaseFile); 
+}
 
 int main()
 {
@@ -123,26 +142,13 @@ int main()
         strcat(testCaseInfoFilePath, testFilePrefix);
         strcat(testCaseInfoFilePath, testCaseInfoFileNames[i]);
 
-        char dataFileName[MAX_FILE_NAME];
-        int expectedDistance;
-        int expectedSimilarity;
+        struct TestInfo testInfo;
 
-
-        FILE *testCaseFile = fopen(testCaseInfoFilePath, "r");
-        if (testCaseFile == NULL) {
-            printf("no such file.\n");
-            return 0;
-        }
-
-        fscanf(testCaseFile, "%s\n", dataFileName);
-        fscanf(testCaseFile, "%d\n", &expectedDistance);
-        fscanf(testCaseFile, "%d\n", &expectedSimilarity);
-
-        fclose(testCaseFile);
+        GetTestInfo(&testInfo, testCaseInfoFilePath);
 
         char testCaseDataFilePath[MAX_FILE_NAME] = "";
         strcat(testCaseDataFilePath, testFilePrefix);
-        strcat(testCaseDataFilePath, dataFileName);
+        strcat(testCaseDataFilePath, testInfo.testCaseDataFileName);
 
         int lineItemCount = CountFileLines(testCaseDataFilePath);
 
@@ -156,20 +162,20 @@ int main()
 
         if (DEBUG) {
             PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, distance, similarity);    
-            if (expectedDistance == distance) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedDistance, distance);
+            if (testInfo.expectedDistance == distance) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedDistance, distance);
             }
-            if (expectedSimilarity == similarity) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedSimilarity, similarity);
+            if (testInfo.expectedSimilarity == similarity) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedSimilarity, similarity);
             }
         }
         
-        if (expectedDistance != distance) {
-            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedDistance, distance);
+        if (testInfo.expectedDistance != distance) {
+            printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedDistance, distance);
         }
 
-        if (expectedSimilarity != similarity) {
-            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedSimilarity, similarity);
+        if (testInfo.expectedSimilarity != similarity) {
+            printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedSimilarity, similarity);
         }
         
     }
