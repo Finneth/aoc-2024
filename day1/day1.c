@@ -1,7 +1,8 @@
 #include<stdio.h>
 #include<string.h>
-#define MAX_FILE_NAME 100
 
+#define DEBUG 1
+#define MAX_FILE_NAME 100
 
 const char testFilePrefix[] = "test/";
 
@@ -61,7 +62,6 @@ int CalculateResult(int lineItemCount, int listA[], int listB[]) {
     return 0;
 }
 
-
 int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
@@ -102,7 +102,17 @@ int main()
         LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
         int result = CalculateResult(lineItemCount, listA, listB);
 
-        PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, result);
+        if (DEBUG) {
+            PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, result);    
+            if (expectedResult == result) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedResult, result);
+            }
+        }
+        
+        if (expectedResult != result) {
+            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedResult, result);
+        }
+        
     }
     return 0;
 }
