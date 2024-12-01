@@ -1,5 +1,7 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<string.h>
+
 
 #define DEBUG 0
 #define MAX_FILE_NAME 100
@@ -25,8 +27,12 @@ int CountFileLines(char filePath[])
 
     // Extract characters from file and store in character c
     for (c = getc(fp); c != EOF; c = getc(fp))
+    {
         if (c == '\n') // Increment count if this character is newline
+        {
             count = count + 1;
+        }
+    }
 
     // Close the file
     fclose(fp);
@@ -58,8 +64,21 @@ void PrintTestCase(char filePath[], int lineItemCount, int listA[], int listB[],
     printf("Result:\t%d\n", result);
 }
 
+int compare(const void* a, const void* b) {
+   return (*(int*)a - *(int*)b);
+}
+
 int CalculateResult(int lineItemCount, int listA[], int listB[]) {
-    return 0;
+    qsort(listA, lineItemCount, sizeof(int), compare);
+    qsort(listB, lineItemCount, sizeof(int), compare);
+
+    int distance = 0;
+
+    for (int i = 0; i < lineItemCount; i++) {
+        distance += abs(listA[i] - listB[i]);
+    }
+
+    return distance;
 }
 
 int main()
@@ -100,6 +119,7 @@ int main()
         int listB[lineItemCount];
 
         LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
+
         int result = CalculateResult(lineItemCount, listA, listB);
 
         if (DEBUG) {
