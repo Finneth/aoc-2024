@@ -54,21 +54,22 @@ void LoadTestCaseInputData(char filePath[], int lineItemCount, int listA[], int 
     fclose(testCaseFile);
 }
 
-void PrintTestCase(char filePath[], int lineItemCount, int listA[], int listB[], int result)
+void PrintTestCase(char filePath[], int lineItemCount, int listA[], int listB[], int distance, int similarity)
 {
     printf("Test Case:\t%s\n", filePath);
     printf("listA\tlistB\n");
     for (int i = 0; i < lineItemCount; i++) {
         printf("%d\t%d\n", listA[i], listB[i]);
     }
-    printf("Result:\t%d\n", result);
+    printf("Distance:\t%d\n", distance);
+    printf("Similarity:\t%d\n", similarity);
 }
 
 int compare(const void* a, const void* b) {
    return (*(int*)a - *(int*)b);
 }
 
-int CalculateResult(int lineItemCount, int listA[], int listB[]) {
+int CalculateDistance(int lineItemCount, int listA[], int listB[]) {
     qsort(listA, lineItemCount, sizeof(int), compare);
     qsort(listB, lineItemCount, sizeof(int), compare);
 
@@ -80,6 +81,34 @@ int CalculateResult(int lineItemCount, int listA[], int listB[]) {
 
     return distance;
 }
+
+int CountInstances(int lineItemCount, int arr[], int value) {
+    int instances = 0;
+
+    for (int i = 0; i < lineItemCount; i++) {
+        if (arr[i] == value)
+        {
+            instances++;
+        }
+    }
+
+    return instances;
+}
+
+int CalculateSimilarity(int lineItemCount, int listA[], int listB[]) {
+    qsort(listA, lineItemCount, sizeof(int), compare);
+    qsort(listB, lineItemCount, sizeof(int), compare);
+
+    int similarity = 0;
+
+    for (int i = 0; i < lineItemCount; i++) {
+        similarity += listA[i] * CountInstances(lineItemCount, listB, listA[i]);
+    }
+
+    return similarity;
+}
+
+
 
 int main()
 {
@@ -95,7 +124,8 @@ int main()
         strcat(testCaseInfoFilePath, testCaseInfoFileNames[i]);
 
         char dataFileName[MAX_FILE_NAME];
-        int expectedResult;
+        int expectedDistance;
+        int expectedSimilarity;
 
 
         FILE *testCaseFile = fopen(testCaseInfoFilePath, "r");
@@ -105,7 +135,8 @@ int main()
         }
 
         fscanf(testCaseFile, "%s\n", dataFileName);
-        fscanf(testCaseFile, "%d\n", &expectedResult);
+        fscanf(testCaseFile, "%d\n", &expectedDistance);
+        fscanf(testCaseFile, "%d\n", &expectedSimilarity);
 
         fclose(testCaseFile);
 
@@ -120,17 +151,25 @@ int main()
 
         LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
 
-        int result = CalculateResult(lineItemCount, listA, listB);
+        int distance = CalculateDistance(lineItemCount, listA, listB);
+        int similarity = CalculateSimilarity(lineItemCount, listA, listB);
 
         if (DEBUG) {
-            PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, result);    
-            if (expectedResult == result) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedResult, result);
+            PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, distance, similarity);    
+            if (expectedDistance == distance) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedDistance, distance);
+            }
+            if (expectedSimilarity == similarity) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", dataFileName, expectedSimilarity, similarity);
             }
         }
         
-        if (expectedResult != result) {
-            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedResult, result);
+        if (expectedDistance != distance) {
+            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedDistance, distance);
+        }
+
+        if (expectedSimilarity != similarity) {
+            printf("%s FAILED. Expected %d, got %d\n\n", dataFileName, expectedSimilarity, similarity);
         }
         
     }
