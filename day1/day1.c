@@ -38,8 +38,6 @@ int CountFileLines(char filePath[])
     return count;
 }
 
-
-
 void LoadTestCaseInputData(char filePath[], int lineItemCount, int listA[], int listB[])
 {
     FILE *testCaseFile = fopen(filePath, "r");
@@ -109,10 +107,14 @@ int CalculateSimilarity(int lineItemCount, int listA[], int listB[]) {
     return similarity;
 }
 
+struct TestResults{
+    int distance;
+    int similarity;
+};
+
 struct TestInfo {
     char testCaseDataFileName[MAX_FILE_NAME];
-    int expectedDistance;
-    int expectedSimilarity;
+    TestResults expectedValues;
 };
 
 void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
@@ -123,8 +125,8 @@ void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
     }
     
     fscanf(testCaseFile, "%s\n", testInfo->testCaseDataFileName);
-    fscanf(testCaseFile, "%d\n", &testInfo->expectedDistance);
-    fscanf(testCaseFile, "%d\n", &testInfo->expectedSimilarity);
+    fscanf(testCaseFile, "%d\n", &testInfo->expectedValues.distance);
+    fscanf(testCaseFile, "%d\n", &testInfo->expectedValues.similarity);
 
     fclose(testCaseFile); 
 }
@@ -132,6 +134,16 @@ void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
 void constructTestFilePath(char fileName[], char path[]) {
     strcat(path, testFilePrefix);
     strcat(path, fileName);  
+}
+
+void checkResults(int lineItemCount, TestInfo testInfo, TestResults expectedValues) {    
+    if (testInfo.expectedValues.distance != expectedValues.distance) {
+        printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.distance, expectedValues.distance);
+    }
+
+    if (testInfo.expectedValues.similarity != expectedValues.similarity) {
+        printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.similarity, expectedValues.similarity);
+    }
 }
 
 int main()
@@ -161,28 +173,25 @@ int main()
 
         LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
 
-        // Calculate results
-        int distance = CalculateDistance(lineItemCount, listA, listB);
-        int similarity = CalculateSimilarity(lineItemCount, listA, listB);
+        TestResults results;
 
-        // Assert against expections
+        // Calculate results
+        results.distance = CalculateDistance(lineItemCount, listA, listB);
+        results.similarity = CalculateSimilarity(lineItemCount, listA, listB);
+
+        // Debug logging for troubleshooting
         if (DEBUG) {
-            PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, distance, similarity);    
-            if (testInfo.expectedDistance == distance) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedDistance, distance);
+            PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, results.distance, results.similarity);    
+            if (testInfo.expectedValues.distance == results.distance) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.distance, results.distance);
             }
-            if (testInfo.expectedSimilarity == similarity) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedSimilarity, similarity);
+            if (testInfo.expectedValues.similarity == results.similarity) {
+                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.similarity, results.similarity);
             }
         }
         
-        if (testInfo.expectedDistance != distance) {
-            printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedDistance, distance);
-        }
-
-        if (testInfo.expectedSimilarity != similarity) {
-            printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedSimilarity, similarity);
-        }
+        // Assert against expections
+        checkResults(lineItemCount, testInfo, results);
         
     }
     return 0;
