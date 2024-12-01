@@ -129,6 +129,11 @@ void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
     fclose(testCaseFile); 
 }
 
+void constructTestFilePath(char fileName[], char path[]) {
+    strcat(path, testFilePrefix);
+    strcat(path, fileName);  
+}
+
 int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
@@ -138,17 +143,16 @@ int main()
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
     {
+        // Get basic test case info
         char testCaseInfoFilePath[MAX_FILE_NAME] = "";
-        strcat(testCaseInfoFilePath, testFilePrefix);
-        strcat(testCaseInfoFilePath, testCaseInfoFileNames[i]);
+        constructTestFilePath(testCaseInfoFileNames[i], testCaseInfoFilePath);
 
         struct TestInfo testInfo;
-
         GetTestInfo(&testInfo, testCaseInfoFilePath);
 
+        // Load test case data
         char testCaseDataFilePath[MAX_FILE_NAME] = "";
-        strcat(testCaseDataFilePath, testFilePrefix);
-        strcat(testCaseDataFilePath, testInfo.testCaseDataFileName);
+        constructTestFilePath(testInfo.testCaseDataFileName, testCaseDataFilePath);
 
         int lineItemCount = CountFileLines(testCaseDataFilePath);
 
@@ -157,9 +161,11 @@ int main()
 
         LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
 
+        // Calculate results
         int distance = CalculateDistance(lineItemCount, listA, listB);
         int similarity = CalculateSimilarity(lineItemCount, listA, listB);
 
+        // Assert against expections
         if (DEBUG) {
             PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, distance, similarity);    
             if (testInfo.expectedDistance == distance) {
