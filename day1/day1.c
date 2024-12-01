@@ -1,5 +1,9 @@
 #include<stdio.h>
+#include<string.h>
 #define MAX_FILE_NAME 100
+
+
+const char testFilePrefix[] = "test/";
 
 int CountFileLines(char filePath[])
 {
@@ -28,19 +32,19 @@ int CountFileLines(char filePath[])
     return count;
 }
 
-void ReadTestCase(char filePath[], int lineItemCount, int listA[], int listB[])
+void LoadTestCaseInputData(char filePath[], int lineItemCount, int listA[], int listB[])
 {
-    FILE *ptr = fopen(filePath, "r");
-    if (ptr == NULL) {
+    FILE *testCaseFile = fopen(filePath, "r");
+    if (testCaseFile == NULL) {
         printf("no such file.\n");
         return;
     }
 
     for (int i = 0; i < lineItemCount; i++) {
-        fscanf(ptr, "%d   %d\n", &listA[i], &listB[i]);
+        fscanf(testCaseFile, "%d   %d\n", &listA[i], &listB[i]);
     }
 
-    fclose(ptr);
+    fclose(testCaseFile);
 }
 
 void PrintTestCase(char filePath[], int lineItemCount, int listA[], int listB[], int result)
@@ -60,14 +64,45 @@ int CalculateResult(int lineItemCount, int listA[], int listB[]) {
 
 int main()
 {
-    char testCaseFilefilePath[] = "test/testCase1_in.txt";
-    int lineItemCount = CountFileLines(testCaseFilefilePath);
+    char testCaseInfoFileNames[][MAX_FILE_NAME] = {
+        "testCase1.txt",
+        "testCase2.txt"
+    };
 
-    int listA[lineItemCount];
-    int listB[lineItemCount];
-    
-    ReadTestCase(testCaseFilefilePath, lineItemCount, listA, listB);
-    int result = CalculateResult(lineItemCount, listA, listB);
+    for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
+    {
+        char testCaseInfoFilePath[MAX_FILE_NAME] = "";
+        strcat(testCaseInfoFilePath, testFilePrefix);
+        strcat(testCaseInfoFilePath, testCaseInfoFileNames[i]);
 
-    PrintTestCase(testCaseFilefilePath, lineItemCount, listA, listB, result);
+        char dataFileName[MAX_FILE_NAME];
+        int expectedResult;
+
+
+        FILE *testCaseFile = fopen(testCaseInfoFilePath, "r");
+        if (testCaseFile == NULL) {
+            printf("no such file.\n");
+            return 0;
+        }
+
+        fscanf(testCaseFile, "%s\n", dataFileName);
+        fscanf(testCaseFile, "%d\n", &expectedResult);
+
+        fclose(testCaseFile);
+
+        char testCaseDataFilePath[MAX_FILE_NAME] = "";
+        strcat(testCaseDataFilePath, testFilePrefix);
+        strcat(testCaseDataFilePath, dataFileName);
+
+        int lineItemCount = CountFileLines(testCaseDataFilePath);
+
+        int listA[lineItemCount];
+        int listB[lineItemCount];
+
+        LoadTestCaseInputData(testCaseDataFilePath, lineItemCount, listA, listB);
+        int result = CalculateResult(lineItemCount, listA, listB);
+
+        PrintTestCase(testCaseDataFilePath, lineItemCount, listA, listB, result);
+    }
+    return 0;
 }
