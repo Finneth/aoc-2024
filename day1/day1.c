@@ -150,7 +150,8 @@ int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
         "testCase1.txt",
-        "testCase2.txt"
+        "testCase2.txt",
+        "testCase3.txt",
     };
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
