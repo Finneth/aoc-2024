@@ -109,10 +109,11 @@ void LoadTestCaseInputData(char filePath[], int lineItemCount, List reports[])
     }
 }
 
-void PrintTestCase(char filePath[], int safeReports)
+void PrintTestCase(char filePath[], int safeReports, int safeReportsDampened)
 {
     printf("Test Case:\t%s\n", filePath);
     printf("Safe Reports:\t%d\n", safeReports);
+    printf("Safe Reports Dampened:\t%d\n", safeReportsDampened);
 }
 
 const int safeChangeLowerBound = 1;
@@ -156,6 +157,47 @@ bool IsReportSafe(List report) {
     return true;
 }
 
+bool IsReportSafeWithDampener(List report) {
+    // Check if the report is safe without the damening effect
+    if(IsReportSafe(report)){
+        return true;
+    }
+
+    // Create a new report with one value missing, and test that instead.
+    for( int exc = 0; exc < report.len; exc++ )
+    {
+        List reducedReport;
+        reducedReport.len = report.len-1;
+
+        // Allocate memory in the reduced report (1 entry less than report)
+        reducedReport.arr = (int*)malloc(sizeof(report)-sizeof(int));
+
+        // Populate the reducedReport
+        int idx = 0;
+        for( int j = 0; j < report.len; j++ )
+        {
+            if( j != exc ) {
+                // Add the jth value from the report to the next slot
+                // in the reduced report idx, as this is not the excluded
+                // index.
+                reducedReport.arr[idx] = report.arr[j];
+                // Keep track of which index of the reduced array we are inserting our value into
+                idx++;
+            }
+            
+        }
+
+        if(IsReportSafe(reducedReport)){
+            // We found a reduction of the report which is true,
+            // no need to carry on.
+            return true;
+        }
+    }
+
+    // No safe reduction could be found
+    return false;
+}
+
 int CountSafeReports(int lineItemCount, List reports[]) {
     int safeCount = 0;
     for (int i = 0; i < lineItemCount; i++ )
@@ -170,8 +212,23 @@ int CountSafeReports(int lineItemCount, List reports[]) {
     return safeCount;
 }
 
+int CountSafeReportsDampened(int lineItemCount, List reports[]) {
+    int safeCount = 0;
+    for (int i = 0; i < lineItemCount; i++ )
+    {
+        List report = reports[i];
+
+        if(IsReportSafeWithDampener(report)) {
+            safeCount++;
+        }
+    }
+
+    return safeCount;
+}
+
 struct TestResults{
     int safeReports;
+    int safeReportsDampened;
 };
 
 struct TestInfo {
@@ -188,6 +245,7 @@ void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]) {
     
     fscanf(testCaseFile, "%s\n", testInfo->testCaseDataFileName);
     fscanf(testCaseFile, "%d\n", &testInfo->expectedValues.safeReports);
+    fscanf(testCaseFile, "%d\n", &testInfo->expectedValues.safeReportsDampened);
 
     fclose(testCaseFile); 
 }
@@ -199,7 +257,11 @@ void constructTestFilePath(char fileName[], char path[]) {
 
 void checkResults(int lineItemCount, TestInfo testInfo, TestResults expectedValues) {    
     if (testInfo.expectedValues.safeReports != expectedValues.safeReports) {
-        printf("%s FAILED. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReports, expectedValues.safeReports);
+        printf("%s FAILED. safeReports: Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReports, expectedValues.safeReports);
+    }
+
+    if (testInfo.expectedValues.safeReportsDampened != expectedValues.safeReportsDampened) {
+        printf("%s FAILED. safeReportsDampened: Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReportsDampened, expectedValues.safeReportsDampened);
     }
 }
 
@@ -233,12 +295,16 @@ int main()
 
         // Calculate results
         results.safeReports = CountSafeReports(lineItemCount, reports);
+        results.safeReportsDampened = CountSafeReportsDampened(lineItemCount, reports);
 
         // Debug logging for troubleshooting
         if (DEBUG) {
-            PrintTestCase(testCaseDataFilePath, results.safeReports);    
+            PrintTestCase(testCaseDataFilePath, results.safeReports, results.safeReportsDampened);    
             if (testInfo.expectedValues.safeReports == results.safeReports) {
-                printf("%s SUCCESS. Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReports, results.safeReports);
+                printf("%s SUCCESS. safeReports: Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReports, results.safeReports);
+            }
+            if (testInfo.expectedValues.safeReportsDampened == results.safeReportsDampened) {
+                printf("%s SUCCESS. safeReportsDampened: Expected %d, got %d\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.safeReportsDampened, results.safeReportsDampened);
             }
         }
         
