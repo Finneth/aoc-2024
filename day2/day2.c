@@ -90,20 +90,20 @@ void LoadTestCaseInputData(char filePath[], int lineItemCount, List reports[])
         reports[lineNumber].len = numItems;
 
         // Allocate memory in the report
-        reports[lineNumber].arr = (int*)malloc(numItems);
+        reports[lineNumber].arr = (int*)malloc(sizeof(report));
 
-        // Use memcpy to copy report to reports[lineNumber].arr
-        int n = sizeof(report) / sizeof(report[0]);
-        memcpy(reports[lineNumber].arr, report, n * sizeof(report[0]));
+        // Copy report to reports[lineNumber].arr
+        memcpy(reports[lineNumber].arr, report, sizeof(report));
 
         lineNumber++;
     }
+
     
     fclose(testCaseFile);
     if (line) {
         free(line);
     }
-    
+
     if (DEBUG) {
         PrintList(reports, lineNumber);
     }
@@ -115,17 +115,59 @@ void PrintTestCase(char filePath[], int safeReports)
     printf("Safe Reports:\t%d\n", safeReports);
 }
 
-int compare(const void* a, const void* b) {
-   return (*(int*)a - *(int*)b);
-}
+const int safeChangeLowerBound = 1;
+const int safeChangeUpperBound = 3;
 
-int CountSafeReports(int lineItemCount, List reports[]) {
-    return 0;
+bool withinTolerance(int val1, int val2) {
+    int delta = abs(val1 - val2);
+    return delta >= safeChangeLowerBound && delta <= safeChangeUpperBound;
 }
 
 bool IsReportSafe(List report) {
-    qsort(report.arr, report.len, sizeof(int), compare);
+    if( report.len < 2 ) {
+        return true;
+    }
+
+    if( report.len >= 2 && !withinTolerance(report.arr[0], report.arr[1])) {
+        return false;
+    }
+
+    // Decide if this sequence is increasing or decreasing
+    bool isIncreasing = report.arr[0] < report.arr[1];
+
+    for(int i = 2; i < report.len; i++)
+    {
+        int last = report.arr[i-1];
+        int current = report.arr[i];
+
+        if (isIncreasing != last < current) {
+            // This report is not safe because this pair is not going in the same
+            // direction as the initial pair.
+            return false;
+        }
+
+        if (!withinTolerance(last, current)) {
+            // This report is not safe because the difference in this pair
+            // is outside of the tolerance range.
+            return false;
+        }
+    }
+
     return true;
+}
+
+int CountSafeReports(int lineItemCount, List reports[]) {
+    int safeCount = 0;
+    for (int i = 0; i < lineItemCount; i++ )
+    {
+        List report = reports[i];
+
+        if(IsReportSafe(report)) {
+            safeCount++;
+        }
+    }
+
+    return safeCount;
 }
 
 struct TestResults{
@@ -165,6 +207,7 @@ int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
         "testCase1.txt",
+        "testCase2.txt",
     };
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
