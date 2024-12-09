@@ -9,43 +9,6 @@
 
 const char testFilePrefix[] = "test/";
 
-struct Pair {
-    int a;
-    int b;
-};
-
-struct PairNode {
-    struct Pair pair;
-    PairNode *next;
-};
-
-void PrintPairNode(PairNode* p){
-    PairNode* current = p;
-    int item = 1;
-
-    printf("PairNode\n item\tfirst\t second\n");
-    while(current != NULL){
-        printf("%d\t%d\t%d\n", item, current->pair.a, current->pair.b);
-        current = current->next;
-        item++;
-    }
-}
-
-PairNode * AddNode(PairNode *current, int a, int b) {
-    PairNode* next = (PairNode*) malloc(sizeof(PairNode));
-
-    next->pair.a = a;
-    next->pair.b = b;
-    next->next = NULL;
-
-    if (current == NULL){
-        return next;
-    }
-
-    current->next = next;
-    return next;
-}
-
 struct StringNode {
     int len;
     StringNode * next;
@@ -100,63 +63,65 @@ StringNode * AddStringNode(StringNode *current, char string[]) {
 StringNode *Match(StringNode * stringNode, char regexString[])
 {
     StringNode *readCurrent = stringNode;
-    size_t maxGroups = 30;
-    size_t maxMatches = 10000;
+    StringNode *first = NULL;
+    StringNode *writeCurrent = NULL;
 
-    regex_t regexCompiled;
-    regmatch_t groupArray[maxGroups];
-    unsigned int m;
-    char * cursor;
+    int count = 0;
+    do{
+        size_t maxGroups = 30;
+        size_t maxMatches = 10000;
 
-    int err = regcomp(&regexCompiled, regexString, REG_EXTENDED);
+        regex_t regexCompiled;
+        regmatch_t groupArray[maxGroups];
+        unsigned int m;
+        char * cursor;
 
-    if (err)
-    {
-        printf("Could not compile regular expression. %d\n", err);
-        return NULL;
-    };
+        int err = regcomp(&regexCompiled, regexString, REG_EXTENDED);
 
-
-    StringNode *first;
-    StringNode *writeCurrent;
-
-    m = 0;
-    cursor = readCurrent->string;
-    for (m = 0; m < maxMatches; m ++)
-    {
-        if (regexec(&regexCompiled, cursor, maxGroups, groupArray, 0)) {
-            break;  // No more matches
-        }
-        
-
-        unsigned int start = 1;
-        unsigned int g = start;
-        unsigned int offset = 0;
-        for (g = start; g < maxGroups; g++)
+        if (err)
         {
-            if (groupArray[g].rm_so == (size_t)-1) {
-                break;  // No more groups    
+            printf("Could not compile regular expression. %d\n", err);
+            return NULL;
+        };
+
+        m = 0;
+        cursor = readCurrent->string;
+        for (m = 0; m < maxMatches; m ++)
+        {
+            if (regexec(&regexCompiled, cursor, maxGroups, groupArray, 0)) {
+                break;  // No more matches
             }
 
-            if (g == start) {
-                offset = groupArray[g].rm_eo;    
-            }      
+            unsigned int start = 1;
+            unsigned int g = start;
+            unsigned int offset = 0;
+            for (g = start; g < maxGroups; g++)
+            {
+                if (groupArray[g].rm_so == (size_t)-1) {
+                    break;  // No more groups    
+                }
 
-            char cursorCopy[strlen(cursor) + 1];
-            strcpy(cursorCopy, cursor);
-            cursorCopy[groupArray[g].rm_eo] = 0;
+                if (g == start) {
+                    offset = groupArray[g].rm_eo;    
+                }      
 
-            writeCurrent = AddStringNode(writeCurrent, cursorCopy + groupArray[g].rm_so);
+                char cursorCopy[strlen(cursor) + 1];
+                strcpy(cursorCopy, cursor);
+                cursorCopy[groupArray[g].rm_eo] = 0;
 
-            if (m == 0 && g == start) {
-                first = writeCurrent;
+                writeCurrent = AddStringNode(writeCurrent, cursorCopy + groupArray[g].rm_so);
+
+                if (first == NULL) {
+                    first = writeCurrent;
+                }
             }
-        }
-        cursor += offset;
-    }
-
-    regfree(&regexCompiled); 
-
+            cursor += offset;
+        } 
+        
+        readCurrent = readCurrent->next;
+        regfree(&regexCompiled); 
+    } while(readCurrent != NULL);
+    
     return first;
 }
 
@@ -180,13 +145,15 @@ StringNode *LoadTestCaseInputData(char filePath[])
     StringNode * current = first;
 
     while(getline(&line, &len, testCaseFile) != -1) {
-        current = AddStringNode(first, line);
+        current = AddStringNode(current, line);
     } 
 
     if (line) {
         free(line);
     }
     fclose(testCaseFile);
+
+    
 
     return first;
 }
@@ -240,37 +207,90 @@ void PrintTestCase(char filePath[], int part1, int part2)
     printf("Part 2:\t%d\n", part2);
 }
 
-long CalcTotal(PairNode* p)
-{
-    PairNode* current = p;
-    long acc = 0;
+int handleInstructionsPart1(StringNode *instructions) {
+    char doString[] = "do()";
+    char dontString[] = "don't()";
+    int acc = 0;
+    StringNode *current = instructions;
+    int a;
+    int b;
 
-    while(current != NULL) {
-        acc += current->pair.a * current->pair.b;
-        current = current->next;
-    }
+    int count = 0;
+
+    do{
+        count++;
+
+        if(strcmp(current->string, doString) == 0){
+            current = current->next;
+            continue;
+        }
+
+        if(strcmp(current->string, dontString) == 0){
+            current = current->next;
+            continue;
+        }
+
+        int res = sscanf(current->string, "mul(%d,%d)\n", &a, &b);
+
+        if(res == 2) {
+            acc += a*b;
+            current = current->next;
+            continue;
+        } 
+        
+        return 0;
+        
+    } while(current != NULL);
+
     return acc;
 }
 
-void FreePairNode(PairNode* p)
-{
-    PairNode* next = p->next;
+int handleInstructionsPart2(StringNode *instructions) {
+    char doString[] = "do()";
+    char dontString[] = "don't()";
+    int acc = 0;
+    StringNode *current = instructions;
+    bool doAddition = true;
+    int a;
+    int b;
 
-    if( next == NULL ) {
-        return;
-    }
+    do{
+        if(strcmp(current->string, doString) == 0){
+            doAddition = true;
+            current = current->next;
+            continue;
+        }
 
-    FreePairNode(next);
-    free(p);
+        if(strcmp(current->string, dontString) == 0){
+            doAddition = false;
+            current = current->next;
+            continue;
+        }
+
+        int res = sscanf(current->string, "mul(%d,%d)\n", &a, &b);
+        if(res == 2) {
+            if (doAddition) {
+
+                acc += a*b;    
+            }
+            current = current->next;
+            continue;
+        } 
+
+        return 0;
+        
+    } while(current != NULL);
+
+    return acc;
 }
 
 int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
-        // "testCase1.txt",
-        // "testCase2.txt",
-        // "testCase3.txt",
-        "testCase4.txt",
+        "testCase1.txt",
+        "testCase2.txt",
+        "testCase3.txt",
+        "testCase5.txt",
     };
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
@@ -286,40 +306,33 @@ int main()
         char testCaseDataFilePath[MAX_FILE_NAME] = "";
         constructTestFilePath(testInfo.testCaseDataFileName, testCaseDataFilePath);
 
-        StringNode* first = LoadTestCaseInputData(testCaseDataFilePath);
+        StringNode* testCaseData = LoadTestCaseInputData(testCaseDataFilePath);
 
         char instructionRegex[] = "(mul\\([0-9]+,[0-9]+\\)|do\\(\\)|don't\\(\\))";
-        StringNode* instructions = Match(first, instructionRegex);
-        PrintStringNode(instructions);
+        StringNode* instructions = Match(testCaseData, instructionRegex);
+    
+        // Calculate results
+        TestResults results;
+        results.part1 = handleInstructionsPart1(instructions);
+        results.part2 = handleInstructionsPart2(instructions);
 
-        // FHM: A second regex to test which type of instruction we have
-
-        // if (DEBUG) {
-        //     PrintPairNode(first);
-        // }
-
-
-        // TestResults results;
-
-        // // Calculate results
-        // results.part1 = CalcTotal(first);
-        // results.part2 = 0;
-
-        // // Debug logging for troubleshooting
-        // if (DEBUG) {
-        //     PrintTestCase(testCaseDataFilePath, results.part1, results.part2);    
-        //     if (testInfo.expectedValues.part1 == results.part1) {
-        //         printf("%s SUCCESS. part1: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part1, results.part1);
-        //     }
-        //     if (testInfo.expectedValues.part2 == results.part2) {
-        //         printf("%s SUCCESS. part2: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part2, results.part2);
-        //     }
-        // }
+        // Debug logging for troubleshooting
+        if (DEBUG) {
+            PrintStringNode(instructions);
+            PrintTestCase(testCaseDataFilePath, results.part1, results.part2);    
+            if (testInfo.expectedValues.part1 == results.part1) {
+                printf("%s SUCCESS. part1: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part1, results.part1);
+            }
+            if (testInfo.expectedValues.part2 == results.part2) {
+                printf("%s SUCCESS. part2: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part2, results.part2);
+            }
+        }
         
-        // // Assert against expections
-        // checkResults(testInfo, results);
+        // Assert against expections
+        checkResults(testInfo, results);
 
-        FreeStringNode(first);
+        FreeStringNode(testCaseData);
+        FreeStringNode(instructions);
         
     }
     return 0;
