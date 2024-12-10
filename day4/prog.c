@@ -14,8 +14,80 @@ void printStrings(char *strings[], int n)
     }
 }
 
-int processWordSearch(char *strings[], int n, char find[])
+struct coordinateNode {
+    int row;
+    int column;
+    coordinateNode *next;
+};
+
+coordinateNode *addCoordinateNode(coordinateNode *current, int row, int column) {
+    coordinateNode* next = (coordinateNode*) malloc(sizeof(coordinateNode));
+    if (next == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    next->next = NULL;
+    next->row = row;
+    next->column = column;
+
+    if (current == NULL){
+        return next;
+    }
+
+    current->next = next;
+    return next;
+}
+
+void freeCoordinateNode(coordinateNode* p){
+    coordinateNode* next = p->next;
+
+    if( next == NULL )
+    {
+        free(p);
+        return;
+    }
+
+    freeCoordinateNode(next);
+    free(p);
+}
+
+// Compiles a list of coordinates of where the X's are
+coordinateNode* findFirstChars(char *strings[], int n, char find[])
 {
+    coordinateNode* firstNode = NULL;
+    coordinateNode* currentNode = firstNode;
+
+    char firstChar = find[0];
+    for(int i = 0; i < n; i++) {
+        char *row = strings[i];
+        for(int j = 0; j < strlen(strings[i]); j++) {
+            char col = row[j];
+            if(col == firstChar) {
+                if(firstNode == NULL) {
+                    firstNode = addCoordinateNode(NULL, i, j);
+                    currentNode = firstNode;
+                } else {
+                    currentNode = addCoordinateNode(currentNode, i, j);
+                }
+            }
+        }    
+    }
+
+    return firstNode;
+}
+
+int processWordSearch(char *strings[], int n, char find[]){
+    // This is a list of coordinates of where the X's are
+    coordinateNode* leadingChars = findFirstChars(strings, n, find);
+
+    coordinateNode* current = leadingChars;
+
+    while(current != NULL) {
+        printf("FHMDEBUG: row:%d, column:%d\n", current->row, current->column);
+        current = current->next;
+    }
+    
     return 0;
 }
 
