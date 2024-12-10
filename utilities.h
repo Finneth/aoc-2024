@@ -32,5 +32,6 @@ StringNode *LoadTestCaseInputData(char filePath[]);
 void constructTestFilePath(char fileName[], char path[]);
 void checkResults(TestInfo testInfo, TestResults expectedValues);
 void PrintTestCase(char filePath[], int part1, int part2);
+int StringNodeLen(StringNode *s);
 
 #endif

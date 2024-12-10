@@ -186,3 +186,16 @@ void PrintTestCase(char filePath[], int part1, int part2)
     printf("Part 1:\t%d\n", part1);
     printf("Part 2:\t%d\n", part2);
 }
+
+int StringNodeLen(StringNode *s)
+{
+    StringNode *current = s;
+    int count = 0;
+
+    while(current != NULL) {
+        count++;
+        current = current->next;
+    }
+
+    return count;
+}
