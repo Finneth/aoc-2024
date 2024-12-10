@@ -28,7 +28,18 @@ int main()
 
         StringNode* testCaseData = LoadTestCaseInputData(testCaseDataFilePath);
 
-        printf("FHMDEBUG: rows: %d, columns: %d\n", StringNodeLen(testCaseData), testCaseData->len);
+        int columns = testCaseData->len;
+        int rows = StringNodeLen(testCaseData);
+
+        char wordSearch[rows][columns+1];
+
+        StringNode *current = testCaseData;
+
+        for(int i = 0; i < rows; i++) {
+            strcpy(wordSearch[i], current->string);
+            current = current->next;
+            printf("FHMDEBUG: %s\n", wordSearch[i]);
+        }
     
         // Calculate results
         TestResults results;
