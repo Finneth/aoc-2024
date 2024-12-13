@@ -63,12 +63,12 @@ void freeCoordinateNode(coordinateNode* p){
 }
 
 // Compiles a list of coordinates of where the X's are
-coordinateNode* findFirstChars(char *strings[], int rows, char find[])
+coordinateNode* findFirstChars(char *strings[], int rows, char find)
 {
     coordinateNode* firstNode = NULL;
     coordinateNode* currentNode = firstNode;
 
-    char firstChar = find[0];
+    char firstChar = find;
     for(int i = 0; i < rows; i++) {
         char *row = strings[i];
         for(int j = 0; j < strlen(strings[i]); j++) {
@@ -87,12 +87,12 @@ coordinateNode* findFirstChars(char *strings[], int rows, char find[])
     return firstNode;
 }
 
-// generateDirections creates a coordinateNode that contains all the
+// generateRadialDirections creates a coordinateNode that contains all the
 // possible directions for a wordsearch.
 // coordinateNode is just a pair of ints, so we can use it to store
 // a "direction", i.e. A pair of numbers that represent a relative
 // translation in the wordsearch. 
-coordinateNode* generateDirections()
+coordinateNode* generateRadialDirections()
 {
     coordinateNode* directions = NULL;
     coordinateNode* directionsCurr = directions;
@@ -118,9 +118,9 @@ coordinateNode* generateDirections()
     return directions;
 }
 
-int processWordSearch(char *strings[], int rows, int columns, char find[]){
+int findWord(char *strings[], int rows, int columns, char find[]){
     // This is a list of coordinates of where the X's are
-    coordinateNode* leadingChars = findFirstChars(strings, rows, find);
+    coordinateNode* leadingChars = findFirstChars(strings, rows, find[0]);
     coordinateNode* currentLeadingChar = leadingChars;
 
     int wordLength = strlen(find);
@@ -128,7 +128,7 @@ int processWordSearch(char *strings[], int rows, int columns, char find[]){
 
     int foundInstances = 0;
 
-    coordinateNode* directions = generateDirections();
+    coordinateNode* directions = generateRadialDirections();
     
     // Iterate through the coordinates known to contain the first character of our word.
     while(currentLeadingChar != NULL){
@@ -178,7 +178,6 @@ int processWordSearch(char *strings[], int rows, int columns, char find[]){
     return foundInstances;
 }
 
-
 int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
@@ -217,7 +216,7 @@ int main()
 
         char find[] = "XMAS";
         TestResults results;
-        results.part1 = processWordSearch(wordSearch, rows, columns, find);
+        results.part1 = findWord(wordSearch, rows, columns, find);
         results.part2 = 0;
 
         // Debug logging for troubleshooting
