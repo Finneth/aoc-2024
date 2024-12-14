@@ -70,6 +70,33 @@ intPairNode* generateRadialDirections()
     return directions;
 }
 
+intPairNode* generateDiagonalDirections()
+{
+    intPairNode* directions = NULL;
+    intPairNode* directionsCurr = directions;
+
+    // Let's build up all the 8 possible directions a word can oriented in
+    for(int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+        for(int colOffset = -1; colOffset <= 1; colOffset++) {
+            if( rowOffset == 0 || colOffset == 0) {
+                // Diagonals are typified by an offset in both axes.
+                // so exclude any offset pairs where one of the offsets
+                // is zero. Also, 0,0 is invalid so we're happy to exclude that.
+                continue;
+            }
+
+            if(directions == NULL) {
+                directions = addIntPairNode(directionsCurr, rowOffset, colOffset);    
+                directionsCurr = directions;
+            } else {
+                directionsCurr = addIntPairNode(directionsCurr, rowOffset, colOffset);
+            }
+        }
+    }
+
+    return directions;
+}
+
 struct wordVectorNode {
     intPair coords;
     intPair direction;
@@ -133,7 +160,7 @@ void freeWordVectorNode(wordVectorNode* p){
     free(p);
 }
 
-wordVectorNode *findWords(char *strings[], int rows, int columns, char find[]){
+wordVectorNode *findWords(intPairNode* directions, char *strings[], int rows, int columns, char find[]){
     // This is a list of coordinates of where the X's are
     intPairNode* leadingChars = findFirstChars(strings, rows, find[0]);
     intPairNode* currentLeadingChar = leadingChars;
@@ -143,8 +170,6 @@ wordVectorNode *findWords(char *strings[], int rows, int columns, char find[]){
 
     wordVectorNode *foundInstances = NULL;
     wordVectorNode *foundInstancesCurr = foundInstances;
-
-    intPairNode* directions = generateRadialDirections();
     
     // Iterate through the coordinates known to contain the first character of our word.
     while(currentLeadingChar != NULL){
@@ -238,15 +263,19 @@ int main()
 
         char find[] = "XMAS";
 
-        wordVectorNode *words = findWords(wordSearch, rows, columns, find) ;
+
+        intPairNode* radialDirections = generateRadialDirections();
+        wordVectorNode *radialWords = findWords(radialDirections, wordSearch, rows, columns, find) ;
+
+        intPairNode* diagonalDirections = generateDiagonalDirections();
 
         TestResults results;
-        results.part1 = countWordVectorNode(words);
+        results.part1 = countWordVectorNode(radialWords);
         results.part2 = 0;
 
         // Debug logging for troubleshooting
         if (DEBUG) {
-            printWordVectorNode(words);
+            printWordVectorNode(radialWords);
             PrintTestCase(testCaseDataFilePath, results.part1, results.part2);    
             if (testInfo.expectedValues.part1 == results.part1) {
                 printf("%s SUCCESS. part1: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part1, results.part1);
