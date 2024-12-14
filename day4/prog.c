@@ -4,7 +4,7 @@
 #include<string.h>
 #include"../utilities.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define MAX_LINE 100
 
 void printStrings(char *strings[], int n)
@@ -225,6 +225,33 @@ wordVectorNode *findWords(intPairNode* directions, char *strings[], int rows, in
     return foundInstances;
 }
 
+wordVectorNode *findCrossWords(wordVectorNode *words, char *wordSearch[], int rows, int columns, char find[]){
+    wordVectorNode *foundInstances = NULL;
+    wordVectorNode *foundInstancesCurr = foundInstances;
+
+    wordVectorNode *wordsIter = words;
+
+    while (wordsIter != NULL) {
+        // TODO: Actually test rather than just add everything.
+        // Each word has a start and a direction, and the word length.
+        // From this we can determine two new start points with directions
+        // that are the mirrored diagonal in either direction.
+        // We then test if either of these are our word.
+
+        if( foundInstances == NULL ) {
+            foundInstances = addWordVectorNode(foundInstances, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
+            foundInstancesCurr = foundInstances;
+        } else {
+            foundInstancesCurr = addWordVectorNode(foundInstancesCurr, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
+        }
+
+
+        wordsIter = wordsIter->next;
+    }
+
+    return foundInstances;
+}
+
 int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
@@ -261,13 +288,15 @@ int main()
 
         // Calculate results
 
-        char find[] = "XMAS";
-
-
+        char find1[] = "XMAS";
         intPairNode* radialDirections = generateRadialDirections();
-        wordVectorNode *radialWords = findWords(radialDirections, wordSearch, rows, columns, find) ;
+        wordVectorNode *radialWords = findWords(radialDirections, wordSearch, rows, columns, find1);
 
+        char find2[] = "MAS";
         intPairNode* diagonalDirections = generateDiagonalDirections();
+        wordVectorNode *diagonalWords = findWords(diagonalDirections, wordSearch, rows, columns, find2);
+
+        wordVectorNode *crossWords = findCrossWords(diagonalWords, wordSearch, rows, columns, find2);
 
         TestResults results;
         results.part1 = countWordVectorNode(radialWords);
@@ -275,7 +304,7 @@ int main()
 
         // Debug logging for troubleshooting
         if (DEBUG) {
-            printWordVectorNode(radialWords);
+            printWordVectorNode(crossWords);
             PrintTestCase(testCaseDataFilePath, results.part1, results.part2);    
             if (testInfo.expectedValues.part1 == results.part1) {
                 printf("%s SUCCESS. part1: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part1, results.part1);
