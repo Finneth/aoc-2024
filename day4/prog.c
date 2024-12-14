@@ -14,9 +14,13 @@ void printStrings(char *strings[], int n)
     }
 }
 
-struct intPairNode {
+struct intPair {
     int row;
     int column;
+};
+
+struct intPairNode {
+    intPair coords;
     intPairNode *next;
 };
 
@@ -28,8 +32,8 @@ intPairNode *addintPairNode(intPairNode *current, int row, int column) {
     }
 
     next->next = NULL;
-    next->row = row;
-    next->column = column;
+    next->coords.row = row;
+    next->coords.column = column;
 
     if (current == NULL){
         return next;
@@ -44,7 +48,7 @@ void printintPairNode(intPairNode* p){
     printf("intPairNode\n");
     printf("row\tcol\n");
     while(current != NULL){
-        printf("%d\t%d\t\n", current->row, current->column);
+        printf("%d\t%d\t\n", current->coords.row, current->coords.column);
         current = current->next;
     }
 }
@@ -141,8 +145,8 @@ int findWord(char *strings[], int rows, int columns, char find[]){
             // character of our word to find.
 
             for(int letterNo = 1; letterNo < wordLength; letterNo++) {
-                int targetRow = currentLeadingChar->row + letterNo * currentDirection->row;
-                int targetColumn = currentLeadingChar->column + letterNo * currentDirection->column;
+                int targetRow = currentLeadingChar->coords.row + letterNo * currentDirection->coords.row;
+                int targetColumn = currentLeadingChar->coords.column + letterNo * currentDirection->coords.column;
 
                 if(targetRow < 0 || targetColumn < 0) {
                     // This is true if we've reached the left or top edge of the word search
