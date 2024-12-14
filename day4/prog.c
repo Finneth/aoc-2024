@@ -14,58 +14,6 @@ void printStrings(char *strings[], int n)
     }
 }
 
-struct intPair {
-    int row;
-    int column;
-};
-
-struct intPairNode {
-    intPair coords;
-    intPairNode *next;
-};
-
-intPairNode *addintPairNode(intPairNode *current, int row, int column) {
-    intPairNode* next = (intPairNode*) malloc(sizeof(intPairNode));
-    if (next == NULL) {
-        perror("Failed to allocate memory");
-        exit(EXIT_FAILURE);
-    }
-
-    next->next = NULL;
-    next->coords.row = row;
-    next->coords.column = column;
-
-    if (current == NULL){
-        return next;
-    }
-
-    current->next = next;
-    return next;
-}
-
-void printintPairNode(intPairNode* p){
-    intPairNode* current = p;
-    printf("intPairNode\n");
-    printf("row\tcol\n");
-    while(current != NULL){
-        printf("%d\t%d\t\n", current->coords.row, current->coords.column);
-        current = current->next;
-    }
-}
-
-void freeintPairNode(intPairNode* p){
-    intPairNode* next = p->next;
-
-    if( next == NULL )
-    {
-        free(p);
-        return;
-    }
-
-    freeintPairNode(next);
-    free(p);
-}
-
 // Compiles a list of coordinates of where the X's are
 intPairNode* findFirstChars(char *strings[], int rows, char find)
 {
@@ -79,10 +27,10 @@ intPairNode* findFirstChars(char *strings[], int rows, char find)
             char col = row[j];
             if(col == firstChar) {
                 if(firstNode == NULL) {
-                    firstNode = addintPairNode(NULL, i, j);
+                    firstNode = addIntPairNode(NULL, i, j);
                     currentNode = firstNode;
                 } else {
-                    currentNode = addintPairNode(currentNode, i, j);
+                    currentNode = addIntPairNode(currentNode, i, j);
                 }
             }
         }    
@@ -111,10 +59,10 @@ intPairNode* generateRadialDirections()
             }
 
             if(directions == NULL) {
-                directions = addintPairNode(directionsCurr, rowOffset, colOffset);    
+                directions = addIntPairNode(directionsCurr, rowOffset, colOffset);    
                 directionsCurr = directions;
             } else {
-                directionsCurr = addintPairNode(directionsCurr, rowOffset, colOffset);
+                directionsCurr = addIntPairNode(directionsCurr, rowOffset, colOffset);
             }
         }
     }

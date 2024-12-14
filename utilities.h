@@ -22,6 +22,16 @@ struct TestInfo {
     TestResults expectedValues;
 };
 
+struct intPair {
+    int row;
+    int column;
+};
+
+struct intPairNode {
+	intPair coords;
+	intPairNode *next ;
+};
+
 // Function declarations
 void GetTestInfo(TestInfo *testInfo, char testCaseInfoFilePath[]);
 void FreeStringNode(StringNode* p);
@@ -33,5 +43,8 @@ void constructTestFilePath(char fileName[], char path[]);
 void checkResults(TestInfo testInfo, TestResults expectedValues);
 void PrintTestCase(char filePath[], int part1, int part2);
 int StringNodeLen(StringNode *s);
+intPairNode *addIntPairNode(intPairNode *current, int row, int column);
+void printIntPairNode(intPairNode* p);
+void freeIntPairNode(intPairNode* p);
 
 #endif

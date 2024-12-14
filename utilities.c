@@ -199,3 +199,45 @@ int StringNodeLen(StringNode *s)
 
     return count;
 }
+
+intPairNode *addIntPairNode(intPairNode *current, int row, int column) {
+    intPairNode* next = (intPairNode*) malloc(sizeof(intPairNode));
+    if (next == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    next->next = NULL;
+    next->coords.row = row;
+    next->coords.column = column;
+
+    if (current == NULL){
+        return next;
+    }
+
+    current->next = next;
+    return next;
+}
+
+void printIntPairNode(intPairNode* p){
+    intPairNode* current = p;
+    printf("intPairNode\n");
+    printf("row\tcol\n");
+    while(current != NULL){
+        printf("%d\t%d\t\n", current->coords.row, current->coords.column);
+        current = current->next;
+    }
+}
+
+void freeIntPairNode(intPairNode* p){
+    intPairNode* next = p->next;
+
+    if( next == NULL )
+    {
+        free(p);
+        return;
+    }
+
+    freeIntPairNode(next);
+    free(p);
+}
