@@ -4,7 +4,7 @@
 #include<string.h>
 #include"../utilities.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_LINE 100
 
 void printStrings(char *strings[], int n)
@@ -225,26 +225,77 @@ wordVectorNode *findWords(intPairNode* directions, char *strings[], int rows, in
     return foundInstances;
 }
 
+
+// findComplementaryDiagonals takes a wordVectorNode, and returns
+// a new wordVectorNode that represents the complementary diagnols to
+// that wordVector. It does not iterate to the next node.
+wordVectorNode *findComplementaryDiagonals(wordVectorNode *wordVector) {
+    if (wordVector->direction.row == 0 || wordVector->direction.column == 0) {
+        printf("Direction %d, %d is not a diagonal. Abort.", wordVector->direction.row, wordVector->direction.column);
+        return NULL;
+    }
+
+    int lastCharRow = wordVector->coords.row + (wordVector->length - 1) * wordVector->direction.row;
+    int lastCharColumn = wordVector->coords.column + (wordVector->length - 1) * wordVector->direction.column;
+
+
+    // Our first complementary diagonal starts from the opposite row,
+    // but the same column, and has the same horizontal direction,
+    // but the opposite vertical
+    wordVectorNode * comp = addWordVectorNode(NULL, lastCharRow, wordVector->coords.column, -wordVector->direction.row, wordVector->direction.column, wordVector->length);
+
+    // Our second starts from the same row, but the opposite column,
+    // and has the same vertical direction, but the opposite horizontal.
+    addWordVectorNode(comp, wordVector->coords.row, lastCharColumn, wordVector->direction.row, -wordVector->direction.column, wordVector->length);
+
+    return comp;
+}
+
+void getWord(wordVectorNode *wordVector, char *wordSearch[], char *diagWord) {
+    for( int i = 0; i < wordVector->length; i++) {
+        int targetRow = wordVector->coords.row + i * wordVector->direction.row;
+        int targetColumn = wordVector->coords.column + i * wordVector->direction.column;
+        char fromGrid = wordSearch[targetRow][targetColumn];
+
+        diagWord[i] = wordSearch[targetRow][targetColumn];
+    }
+
+    diagWord[wordVector->length] = '\0';
+}
+
 wordVectorNode *findCrossWords(wordVectorNode *words, char *wordSearch[], int rows, int columns, char find[]){
     wordVectorNode *foundInstances = NULL;
     wordVectorNode *foundInstancesCurr = foundInstances;
-
     wordVectorNode *wordsIter = words;
 
     while (wordsIter != NULL) {
-        // TODO: Actually test rather than just add everything.
-        // Each word has a start and a direction, and the word length.
-        // From this we can determine two new start points with directions
-        // that are the mirrored diagonal in either direction.
-        // We then test if either of these are our word.
+        // Check if either of the diagonals matches our word.
+        wordVectorNode *diags = findComplementaryDiagonals(wordsIter);
 
-        if( foundInstances == NULL ) {
-            foundInstances = addWordVectorNode(foundInstances, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
-            foundInstancesCurr = foundInstances;
+        char diagWord[diags->length+1];
+        getWord(diags, wordSearch, diagWord);
+
+        bool match = false;
+
+        if( strcmp(diagWord, find) == 0 ) {
+            // Got a match on the first complementary diagonal
+            match = true;
         } else {
-            foundInstancesCurr = addWordVectorNode(foundInstancesCurr, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
+            getWord(diags->next, wordSearch, diagWord);
+            if(strcmp(diagWord, find) == 0) {
+                // Got a match on the second diagonal
+                match = true;
+            }
         }
 
+        if(match) {
+            if( foundInstances == NULL ) {
+                foundInstances = addWordVectorNode(foundInstances, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
+                foundInstancesCurr = foundInstances;
+            } else {
+                foundInstancesCurr = addWordVectorNode(foundInstancesCurr, wordsIter->coords.row, wordsIter->coords.column, wordsIter->direction.row, wordsIter->direction.column, wordsIter->length);
+            }
+        }
 
         wordsIter = wordsIter->next;
     }
@@ -256,7 +307,7 @@ int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
         "testCase1.txt",
-        // "testCase2.txt",
+        "testCase2.txt",
     };
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
@@ -295,12 +346,15 @@ int main()
         char find2[] = "MAS";
         intPairNode* diagonalDirections = generateDiagonalDirections();
         wordVectorNode *diagonalWords = findWords(diagonalDirections, wordSearch, rows, columns, find2);
-
         wordVectorNode *crossWords = findCrossWords(diagonalWords, wordSearch, rows, columns, find2);
 
         TestResults results;
         results.part1 = countWordVectorNode(radialWords);
-        results.part2 = 0;
+
+        // findCrossWords finds words that have a crossed word.
+        // This means we end up double counting the crossword grids,
+        // so just half the result here.
+        results.part2 = countWordVectorNode(crossWords) / 2;
 
         // Debug logging for troubleshooting
         if (DEBUG) {
