@@ -70,6 +70,58 @@ intPairNode* generateRadialDirections()
     return directions;
 }
 
+struct wordVectorNode {
+    intPair coords;
+    intPair direction;
+    int length;
+    wordVectorNode *next;
+};
+
+wordVectorNode *addWordVectorNode(wordVectorNode *current, int row, int column, int x, int y, int len) {
+    wordVectorNode* next = (wordVectorNode*) malloc(sizeof(wordVectorNode));
+    if (next == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    next->next = NULL;
+    next->coords.row = row;
+    next->coords.column = column;
+    next->direction.row = x;
+    next->direction.column = y;
+    next->length = len;
+
+    if (current == NULL){
+        return next;
+    }
+
+    current->next = next;
+    return next;
+}
+
+void printWordVectorNode(wordVectorNode* p){
+    wordVectorNode* current = p;
+    printf("wordVectorNode\n");
+    printf("row\tcol\tx\ty\tlen\n");
+    while(current != NULL){
+        printf("%d\t%d\t%d\t%d\t%d\t\n", current->coords.row, current->coords.column, current->direction.row, current->direction.column, current->length);
+        current = current->next;
+    }
+}
+
+void freeWordVectorNode(wordVectorNode* p){
+    wordVectorNode* next = p->next;
+
+    if( next == NULL )
+    {
+        free(p);
+        return;
+    }
+
+    freeWordVectorNode(next);
+    free(p);
+}
+
 int findWord(char *strings[], int rows, int columns, char find[]){
     // This is a list of coordinates of where the X's are
     intPairNode* leadingChars = findFirstChars(strings, rows, find[0]);
