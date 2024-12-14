@@ -109,6 +109,17 @@ void printWordVectorNode(wordVectorNode* p){
     }
 }
 
+int countWordVectorNode(wordVectorNode* p){
+    int count = 0;
+    wordVectorNode* current = p;
+    while(current != NULL){
+        count++;
+        current = current->next;
+    }
+
+    return count;
+}
+
 void freeWordVectorNode(wordVectorNode* p){
     wordVectorNode* next = p->next;
 
@@ -122,7 +133,7 @@ void freeWordVectorNode(wordVectorNode* p){
     free(p);
 }
 
-int findWord(char *strings[], int rows, int columns, char find[]){
+wordVectorNode *findWords(char *strings[], int rows, int columns, char find[]){
     // This is a list of coordinates of where the X's are
     intPairNode* leadingChars = findFirstChars(strings, rows, find[0]);
     intPairNode* currentLeadingChar = leadingChars;
@@ -130,7 +141,8 @@ int findWord(char *strings[], int rows, int columns, char find[]){
     int wordLength = strlen(find);
     int maxDelta = wordLength - 1;
 
-    int foundInstances = 0;
+    wordVectorNode *foundInstances = NULL;
+    wordVectorNode *foundInstancesCurr = foundInstances;
 
     intPairNode* directions = generateRadialDirections();
     
@@ -170,7 +182,13 @@ int findWord(char *strings[], int rows, int columns, char find[]){
 
                 if(letterNo == wordLength - 1) {
                     // We've matched every letter!
-                    foundInstances++;
+
+                    if(foundInstances == NULL){
+                        foundInstances = addWordVectorNode(foundInstances, currentLeadingChar->coords.row, currentLeadingChar->coords.column, currentDirection->coords.row, currentDirection->coords.column, wordLength);
+                        foundInstancesCurr = foundInstances;
+                    } else {
+                        foundInstancesCurr = addWordVectorNode(foundInstancesCurr, currentLeadingChar->coords.row, currentLeadingChar->coords.column, currentDirection->coords.row, currentDirection->coords.column, wordLength);
+                    }
                 }
             }
 
@@ -186,7 +204,7 @@ int main()
 {
     char testCaseInfoFileNames[][MAX_FILE_NAME] = {
         "testCase1.txt",
-        "testCase2.txt",
+        // "testCase2.txt",
     };
 
     for (size_t i = 0; i < sizeof(testCaseInfoFileNames) / sizeof(testCaseInfoFileNames[0]); i++)
@@ -219,13 +237,16 @@ int main()
         // Calculate results
 
         char find[] = "XMAS";
+
+        wordVectorNode *words = findWords(wordSearch, rows, columns, find) ;
+
         TestResults results;
-        results.part1 = findWord(wordSearch, rows, columns, find);
+        results.part1 = countWordVectorNode(words);
         results.part2 = 0;
 
         // Debug logging for troubleshooting
         if (DEBUG) {
-            printStrings(wordSearch, rows);
+            printWordVectorNode(words);
             PrintTestCase(testCaseDataFilePath, results.part1, results.part2);    
             if (testInfo.expectedValues.part1 == results.part1) {
                 printf("%s SUCCESS. part1: Expected %ld, got %ld\n\n", testInfo.testCaseDataFileName, testInfo.expectedValues.part1, results.part1);
