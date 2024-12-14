@@ -14,14 +14,14 @@ void printStrings(char *strings[], int n)
     }
 }
 
-struct coordinateNode {
+struct intPairNode {
     int row;
     int column;
-    coordinateNode *next;
+    intPairNode *next;
 };
 
-coordinateNode *addCoordinateNode(coordinateNode *current, int row, int column) {
-    coordinateNode* next = (coordinateNode*) malloc(sizeof(coordinateNode));
+intPairNode *addintPairNode(intPairNode *current, int row, int column) {
+    intPairNode* next = (intPairNode*) malloc(sizeof(intPairNode));
     if (next == NULL) {
         perror("Failed to allocate memory");
         exit(EXIT_FAILURE);
@@ -39,9 +39,9 @@ coordinateNode *addCoordinateNode(coordinateNode *current, int row, int column) 
     return next;
 }
 
-void printCoordinateNode(coordinateNode* p){
-    coordinateNode* current = p;
-    printf("coordinateNode\n");
+void printintPairNode(intPairNode* p){
+    intPairNode* current = p;
+    printf("intPairNode\n");
     printf("row\tcol\n");
     while(current != NULL){
         printf("%d\t%d\t\n", current->row, current->column);
@@ -49,8 +49,8 @@ void printCoordinateNode(coordinateNode* p){
     }
 }
 
-void freeCoordinateNode(coordinateNode* p){
-    coordinateNode* next = p->next;
+void freeintPairNode(intPairNode* p){
+    intPairNode* next = p->next;
 
     if( next == NULL )
     {
@@ -58,15 +58,15 @@ void freeCoordinateNode(coordinateNode* p){
         return;
     }
 
-    freeCoordinateNode(next);
+    freeintPairNode(next);
     free(p);
 }
 
 // Compiles a list of coordinates of where the X's are
-coordinateNode* findFirstChars(char *strings[], int rows, char find)
+intPairNode* findFirstChars(char *strings[], int rows, char find)
 {
-    coordinateNode* firstNode = NULL;
-    coordinateNode* currentNode = firstNode;
+    intPairNode* firstNode = NULL;
+    intPairNode* currentNode = firstNode;
 
     char firstChar = find;
     for(int i = 0; i < rows; i++) {
@@ -75,10 +75,10 @@ coordinateNode* findFirstChars(char *strings[], int rows, char find)
             char col = row[j];
             if(col == firstChar) {
                 if(firstNode == NULL) {
-                    firstNode = addCoordinateNode(NULL, i, j);
+                    firstNode = addintPairNode(NULL, i, j);
                     currentNode = firstNode;
                 } else {
-                    currentNode = addCoordinateNode(currentNode, i, j);
+                    currentNode = addintPairNode(currentNode, i, j);
                 }
             }
         }    
@@ -87,15 +87,15 @@ coordinateNode* findFirstChars(char *strings[], int rows, char find)
     return firstNode;
 }
 
-// generateRadialDirections creates a coordinateNode that contains all the
+// generateRadialDirections creates a intPairNode that contains all the
 // possible directions for a wordsearch.
-// coordinateNode is just a pair of ints, so we can use it to store
+// intPairNode is just a pair of ints, so we can use it to store
 // a "direction", i.e. A pair of numbers that represent a relative
 // translation in the wordsearch. 
-coordinateNode* generateRadialDirections()
+intPairNode* generateRadialDirections()
 {
-    coordinateNode* directions = NULL;
-    coordinateNode* directionsCurr = directions;
+    intPairNode* directions = NULL;
+    intPairNode* directionsCurr = directions;
 
     // Let's build up all the 8 possible directions a word can oriented in
     for(int rowOffset = -1; rowOffset <= 1; rowOffset++) {
@@ -107,10 +107,10 @@ coordinateNode* generateRadialDirections()
             }
 
             if(directions == NULL) {
-                directions = addCoordinateNode(directionsCurr, rowOffset, colOffset);    
+                directions = addintPairNode(directionsCurr, rowOffset, colOffset);    
                 directionsCurr = directions;
             } else {
-                directionsCurr = addCoordinateNode(directionsCurr, rowOffset, colOffset);
+                directionsCurr = addintPairNode(directionsCurr, rowOffset, colOffset);
             }
         }
     }
@@ -120,20 +120,20 @@ coordinateNode* generateRadialDirections()
 
 int findWord(char *strings[], int rows, int columns, char find[]){
     // This is a list of coordinates of where the X's are
-    coordinateNode* leadingChars = findFirstChars(strings, rows, find[0]);
-    coordinateNode* currentLeadingChar = leadingChars;
+    intPairNode* leadingChars = findFirstChars(strings, rows, find[0]);
+    intPairNode* currentLeadingChar = leadingChars;
 
     int wordLength = strlen(find);
     int maxDelta = wordLength - 1;
 
     int foundInstances = 0;
 
-    coordinateNode* directions = generateRadialDirections();
+    intPairNode* directions = generateRadialDirections();
     
     // Iterate through the coordinates known to contain the first character of our word.
     while(currentLeadingChar != NULL){
         // Reset directions on each new leading char
-        coordinateNode* currentDirection = directions;
+        intPairNode* currentDirection = directions;
         // Iterate through the possible directions
         while(currentDirection != NULL){
             // Add the direction to the coordinates of the leading char incrementally,
